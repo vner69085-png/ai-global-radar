@@ -1,0 +1,1757 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Global Radar · 全球AI动态监测</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #060810;
+    --bg2: #0c1020;
+    --bg3: #111827;
+    --border: #1e2d45;
+    --border2: #243450;
+    --accent: #00d4ff;
+    --accent2: #0066ff;
+    --accent3: #00ff88;
+    --warn: #ff6b35;
+    --text: #e2e8f0;
+    --text2: #7a8fa8;
+    --text3: #4a5568;
+    --card: #0d1626;
+    --glow: rgba(0, 212, 255, 0.15);
+    --glow2: rgba(0, 102, 255, 0.1);
+    --tag-policy: #ff6b35;
+    --tag-model: #00d4ff;
+    --tag-funding: #a78bfa;
+    --tag-research: #00ff88;
+    --tag-app: #fbbf24;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans SC', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── SCANLINE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.03) 2px,
+      rgba(0,0,0,0.03) 4px
+    );
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  /* ── HEADER ── */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(6,8,16,0.95);
+    backdrop-filter: blur(12px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Space Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .logo-dot {
+    width: 8px; height: 8px;
+    background: var(--accent3);
+    border-radius: 50%;
+    animation: pulse-dot 2s ease-in-out infinite;
+    box-shadow: 0 0 8px var(--accent3);
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .last-update {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--text3);
+    letter-spacing: 1px;
+  }
+
+  .btn-settings {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    color: var(--text2);
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: 'Space Mono', monospace;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+  }
+  .btn-settings:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--glow);
+  }
+
+  /* ── SETTINGS MODAL ── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 999;
+    backdrop-filter: blur(4px);
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.active { display: flex; }
+
+  .modal {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    width: 480px;
+    padding: 32px;
+    box-shadow: 0 0 60px rgba(0,212,255,0.1);
+    animation: modal-in 0.2s ease;
+  }
+
+  @keyframes modal-in {
+    from { opacity:0; transform: translateY(-12px); }
+    to { opacity:1; transform: translateY(0); }
+  }
+
+  .modal h2 {
+    font-family: 'Space Mono', monospace;
+    font-size: 14px;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .modal p {
+    color: var(--text2);
+    font-size: 13px;
+    line-height: 1.6;
+    margin-bottom: 24px;
+  }
+
+  .modal label {
+    display: block;
+    font-size: 12px;
+    color: var(--text2);
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+
+  .modal input {
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    padding: 10px 14px;
+    border-radius: 4px;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    margin-bottom: 8px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .modal input:focus { border-color: var(--accent); }
+
+  .modal-hint {
+    font-size: 11px;
+    color: var(--text3);
+    margin-bottom: 24px;
+    line-height: 1.5;
+  }
+  .modal-hint a { color: var(--accent2); text-decoration: none; }
+  .modal-hint a:hover { text-decoration: underline; }
+
+  .modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+  }
+
+  .btn-cancel {
+    background: transparent;
+    border: 1px solid var(--border2);
+    color: var(--text2);
+    padding: 8px 20px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: 'Space Mono', monospace;
+    transition: all 0.2s;
+  }
+  .btn-cancel:hover { border-color: var(--text2); }
+
+  .btn-save {
+    background: var(--accent2);
+    border: 1px solid var(--accent2);
+    color: #fff;
+    padding: 8px 20px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+  }
+  .btn-save:hover { background: var(--accent); border-color: var(--accent); }
+
+  /* ── MAIN LAYOUT ── */
+  .main {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    min-height: calc(100vh - 60px);
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    border-right: 1px solid var(--border);
+    padding: 24px 0;
+    background: var(--bg);
+  }
+
+  .sidebar-section {
+    padding: 0 20px;
+    margin-bottom: 28px;
+  }
+
+  .sidebar-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .country-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    color: var(--text2);
+    font-size: 13px;
+    font-family: 'Noto Sans SC', sans-serif;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: left;
+    margin-bottom: 2px;
+    position: relative;
+  }
+
+  .country-btn:hover {
+    background: var(--bg3);
+    color: var(--text);
+    border-color: var(--border);
+  }
+
+  .country-btn.active {
+    background: var(--glow);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .country-flag { font-size: 16px; line-height: 1; }
+
+  .country-badge {
+    margin-left: auto;
+    background: var(--bg3);
+    color: var(--text3);
+    font-size: 10px;
+    font-family: 'Space Mono', monospace;
+    padding: 2px 6px;
+    border-radius: 10px;
+    min-width: 22px;
+    text-align: center;
+  }
+
+  .country-btn.active .country-badge {
+    background: var(--accent2);
+    color: #fff;
+  }
+
+  .tier-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 0 20px 20px;
+  }
+
+  /* TAG FILTERS */
+  .tag-filter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-family: 'Noto Sans SC', sans-serif;
+    color: var(--text2);
+    transition: all 0.15s;
+    width: 100%;
+    text-align: left;
+    margin-bottom: 2px;
+  }
+  .tag-filter:hover { background: var(--bg3); border-color: var(--border); }
+  .tag-filter.active { background: var(--bg3); border-color: var(--border2); color: var(--text); }
+
+  .tag-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* TIME FILTER */
+  .time-btns {
+    display: flex;
+    gap: 4px;
+  }
+
+  .time-btn {
+    flex: 1;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    padding: 5px 0;
+    border-radius: 3px;
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+  }
+  .time-btn:hover { border-color: var(--accent2); color: var(--text); }
+  .time-btn.active {
+    background: var(--accent2);
+    border-color: var(--accent2);
+    color: #fff;
+  }
+
+  /* ── CONTENT AREA ── */
+  .content {
+    padding: 28px 32px;
+    overflow-y: auto;
+  }
+
+  /* STATS BAR */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .stat-value {
+    font-size: 26px;
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .stat-sub {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 4px;
+  }
+
+  /* SECTION HEADER */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .section-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--text2);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-title::before {
+    content: '';
+    width: 3px; height: 14px;
+    background: var(--accent);
+    border-radius: 2px;
+    display: block;
+  }
+
+  .btn-refresh {
+    background: transparent;
+    border: 1px solid var(--border2);
+    color: var(--text2);
+    padding: 5px 12px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+  }
+  .btn-refresh:hover { border-color: var(--accent3); color: var(--accent3); }
+  .btn-refresh:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* NEWS FEED */
+  .news-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .news-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px 20px;
+    transition: all 0.2s;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .news-card:hover {
+    border-color: var(--border2);
+    background: var(--bg3);
+    transform: translateX(3px);
+  }
+
+  .news-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--accent2);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .news-card:hover::before { opacity: 1; }
+
+  .news-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+
+  .news-country {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--text3);
+    font-family: 'Space Mono', monospace;
+  }
+
+  .news-time {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: 'Space Mono', monospace;
+    margin-left: auto;
+  }
+
+  .news-tag {
+    font-size: 10px;
+    font-family: 'Space Mono', monospace;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .tag-policy-style { background: rgba(255,107,53,0.15); color: var(--tag-policy); border: 1px solid rgba(255,107,53,0.3); }
+  .tag-model-style { background: rgba(0,212,255,0.1); color: var(--tag-model); border: 1px solid rgba(0,212,255,0.25); }
+  .tag-funding-style { background: rgba(167,139,250,0.1); color: var(--tag-funding); border: 1px solid rgba(167,139,250,0.25); }
+  .tag-research-style { background: rgba(0,255,136,0.08); color: var(--tag-research); border: 1px solid rgba(0,255,136,0.2); }
+  .tag-app-style { background: rgba(251,191,36,0.1); color: var(--tag-app); border: 1px solid rgba(251,191,36,0.25); }
+
+  .news-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.5;
+    margin-bottom: 8px;
+  }
+
+  .news-summary {
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.65;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .news-source {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 8px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* LOADING STATE */
+  .loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    gap: 16px;
+    color: var(--text3);
+  }
+
+  .loading-spinner {
+    width: 32px; height: 32px;
+    border: 2px solid var(--border2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-text {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: var(--text3);
+  }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text3);
+  }
+
+  .empty-state .empty-icon { font-size: 40px; margin-bottom: 16px; opacity: 0.4; }
+  .empty-state p { font-size: 13px; line-height: 1.6; }
+  .empty-state a { color: var(--accent2); cursor: pointer; }
+
+  /* NO KEY BANNER */
+  .no-key-banner {
+    background: rgba(255,107,53,0.08);
+    border: 1px solid rgba(255,107,53,0.25);
+    border-radius: 6px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+    color: var(--text2);
+  }
+  .no-key-banner .icon { font-size: 18px; }
+  .no-key-banner a { color: var(--warn); cursor: pointer; text-decoration: underline; }
+
+  /* AI SUMMARY BADGE */
+  .ai-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-family: 'Space Mono', monospace;
+    color: var(--accent3);
+    border: 1px solid rgba(0,255,136,0.2);
+    background: rgba(0,255,136,0.06);
+    padding: 2px 7px;
+    border-radius: 3px;
+    letter-spacing: 0.5px;
+    margin-left: 4px;
+  }
+
+  .ai-badge::before {
+    content: '◆';
+    font-size: 8px;
+  }
+
+  /* PULSE ANIMATION for new items */
+  @keyframes item-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .news-card { animation: item-in 0.3s ease forwards; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+  /* REGION MODAL */
+  .region-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 18px 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .region-card:hover {
+    border-color: var(--border2);
+    background: var(--card);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  }
+  .region-icon { font-size: 28px; line-height: 1; margin-bottom: 2px; }
+  .region-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .region-sub { font-size: 11px; color: var(--text3); }
+  .region-sources {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin: 4px 0;
+  }
+  .region-tag {
+    font-size: 10px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    color: var(--text3);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: 'Space Mono', monospace;
+  }
+  .region-note { font-size: 11px; color: var(--text2); margin-top: 2px; }
+  .code-block {
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--accent3);
+    letter-spacing: 0.5px;
+    cursor: text;
+    user-select: all;
+  }
+
+  /* PROVIDER CARDS */
+  .provider-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .provider-card:hover { border-color: var(--border2); }
+  .provider-card.active {
+    border-color: var(--accent2);
+    background: var(--glow2);
+  }
+  .prov-name {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 3px;
+  }
+  .provider-card.active .prov-name { color: var(--accent); }
+  .prov-desc {
+    font-size: 11px;
+    color: var(--text3);
+    line-height: 1.4;
+  }
+
+  /* FOOTER STATUS */
+  .status-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 28px;
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 20px;
+    z-index: 50;
+  }
+
+  .status-item {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .status-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--accent3);
+    animation: pulse-dot 3s ease-in-out infinite;
+  }
+
+  .status-dot.offline { background: var(--warn); animation: none; }
+</style>
+</head>
+<body>
+
+<!-- REGION MODAL -->
+<div class="modal-overlay active" id="regionModal">
+  <div class="modal" style="width:540px">
+    <h2>🌏 选择数据源模式</h2>
+    <p style="margin-bottom:20px">根据你的网络环境选择合适的数据源，也可以随时在设置中切换。</p>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px">
+
+      <!-- 国内模式 -->
+      <div class="region-card" onclick="selectRegion('cn')" style="border-color:var(--accent3)">
+        <div class="region-icon">🇨🇳</div>
+        <div class="region-title" style="color:var(--accent3)">国内模式</div>
+        <div class="region-sub">直连 · 无需代理</div>
+        <div class="region-sources">
+          <div class="region-tag">机器之心</div>
+          <div class="region-tag">量子位</div>
+          <div class="region-tag">新智元</div>
+          <div class="region-tag">36氪</div>
+          <div class="region-tag">虎嗅</div>
+          <div class="region-tag">+3个</div>
+        </div>
+        <div class="region-note" style="color:var(--accent3)">✓ 推荐 · 打开即用</div>
+      </div>
+
+      <!-- 全球模式 -->
+      <div class="region-card" onclick="showGlobalGuide()">
+        <div class="region-icon">🌐</div>
+        <div class="region-title">全球模式</div>
+        <div class="region-sub">国内 + 境外全部源</div>
+        <div class="region-sources">
+          <div class="region-tag">TechCrunch</div>
+          <div class="region-tag">MIT</div>
+          <div class="region-tag">DeepMind</div>
+          <div class="region-tag">arXiv</div>
+          <div class="region-tag">BBC</div>
+          <div class="region-tag">+9个</div>
+        </div>
+        <div class="region-note">需要本地服务器或代理</div>
+      </div>
+
+    </div>
+
+    <!-- 全球模式教程（默认隐藏） -->
+    <div id="globalGuide" style="display:none">
+      <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:16px 18px;margin-bottom:16px">
+        <div style="font-family:'Space Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:1px;margin-bottom:12px">▶ 使用全球模式需先启动本地服务器</div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:10px">在终端中执行以下任一命令：</div>
+
+        <div style="margin-bottom:8px">
+          <div style="font-size:10px;color:var(--text3);font-family:'Space Mono',monospace;margin-bottom:4px">方式一：Python（推荐）</div>
+          <div class="code-block">cd ~/Downloads && python3 -m http.server 8080</div>
+        </div>
+        <div style="margin-bottom:12px">
+          <div style="font-size:10px;color:var(--text3);font-family:'Space Mono',monospace;margin-bottom:4px">方式二：Node.js</div>
+          <div class="code-block">npx serve ~/Downloads</div>
+        </div>
+
+        <div style="font-size:12px;color:var(--text2)">
+          然后浏览器访问
+          <span style="font-family:'Space Mono',monospace;color:var(--accent);background:var(--bg);padding:2px 6px;border-radius:3px;font-size:11px">http://localhost:8080/index.html</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn-cancel" onclick="hideGlobalGuide()" style="flex:1">← 返回</button>
+        <button class="btn-save" onclick="selectRegion('global')" style="flex:2">已启动，进入全球模式 →</button>
+      </div>
+    </div>
+
+    <div id="regionDefaultActions" style="text-align:center">
+      <div style="font-size:11px;color:var(--text3);margin-top:4px">可随时通过顶部菜单切换模式</div>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal" style="width:520px">
+    <h2>⚙ AI 摘要设置</h2>
+    <p>选择你的 API 服务商并填入 Key，即可启用智能中文摘要。Key 仅存储在浏览器本地，不经过任何服务器。</p>
+
+    <label for-section="provider">选择服务商</label>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px" id="providerGrid">
+      <div class="provider-card active" onclick="selectProvider('aihubmix')" id="prov-aihubmix">
+        <div class="prov-name">AiHubMix</div>
+        <div class="prov-desc">国内直连 · 支持Claude/GPT/Gemini</div>
+      </div>
+      <div class="provider-card" onclick="selectProvider('openrouter')" id="prov-openrouter">
+        <div class="prov-name">OpenRouter</div>
+        <div class="prov-desc">200+ 模型 · 含免费额度</div>
+      </div>
+      <div class="provider-card" onclick="selectProvider('deepseek')" id="prov-deepseek">
+        <div class="prov-name">DeepSeek</div>
+        <div class="prov-desc">国内直连 · 极低价格</div>
+      </div>
+      <div class="provider-card" onclick="selectProvider('openai')" id="prov-openai">
+        <div class="prov-name">OpenAI</div>
+        <div class="prov-desc">GPT-4o · 需要代理</div>
+      </div>
+      <div class="provider-card" onclick="selectProvider('custom')" id="prov-custom" style="grid-column:1/-1">
+        <div class="prov-name">自定义端点</div>
+        <div class="prov-desc">任何兼容 OpenAI 格式的服务</div>
+      </div>
+    </div>
+
+    <label for-section="apikey">API KEY</label>
+    <input type="password" id="apiKeyInput" placeholder="粘贴你的 API Key..." autocomplete="off">
+
+    <label for-section="model" style="margin-top:12px">模型名称</label>
+    <input type="text" id="modelInput" placeholder="例：claude-3-5-haiku-20241022" autocomplete="off" style="margin-bottom:4px">
+
+    <div id="customEndpointRow" style="display:none;margin-top:8px">
+      <label for-section="endpoint">自定义 API 地址</label>
+      <input type="text" id="endpointInput" placeholder="https://your-api.com/v1/chat/completions" autocomplete="off">
+    </div>
+
+    <div class="modal-hint" id="providerHint" style="margin-top:10px">
+      前往 <a href="https://aihubmix.com" target="_blank">aihubmix.com</a> 获取 Key，支持国内直连。
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeSettings()">取消</button>
+      <button class="btn-save" onclick="saveSettings()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    AI RADAR
+    <span style="color:var(--text3); font-weight:400; letter-spacing:1px; font-size:12px;">全球AI动态</span>
+  </div>
+  <div class="header-right">
+    <span class="last-update" id="lastUpdateTime">LAST UPDATE: --</span>
+    <button class="btn-settings" id="regionBtn" onclick="showRegionModal()" style="margin-right:4px">🌏 切换模式</button>
+    <button class="btn-settings" id="langBtn" onclick="toggleLanguage()" style="margin-right:4px">EN</button>
+    <button class="btn-settings" id="apiKeyBtn" onclick="openSettings()">⚙ API KEY</button>
+  </div>
+</header>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-title">第一梯队</div>
+      <button class="country-btn active" onclick="filterCountry('all')" id="btn-all">
+        <span class="country-flag">🌐</span> 全部
+        <span class="country-badge" id="badge-all">0</span>
+      </button>
+      <button class="country-btn" onclick="filterCountry('us')" id="btn-us">
+        <span class="country-flag">🇺🇸</span> 美国
+        <span class="country-badge" id="badge-us">0</span>
+      </button>
+      <button class="country-btn" onclick="filterCountry('cn')" id="btn-cn">
+        <span class="country-flag">🇨🇳</span> 中国
+        <span class="country-badge" id="badge-cn">0</span>
+      </button>
+      <button class="country-btn" onclick="filterCountry('gb')" id="btn-gb">
+        <span class="country-flag">🇬🇧</span> 英国
+        <span class="country-badge" id="badge-gb">0</span>
+      </button>
+      <button class="country-btn" onclick="filterCountry('eu')" id="btn-eu">
+        <span class="country-flag">🇩🇪</span> 欧盟
+        <span class="country-badge" id="badge-eu">0</span>
+      </button>
+    </div>
+
+    <div class="tier-divider"></div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-title">新兴市场</div>
+      <button class="country-btn" onclick="filterCountry('in')" id="btn-in">
+        <span class="country-flag">🇮🇳</span> 印度
+        <span class="country-badge" id="badge-in">0</span>
+      </button>
+      <button class="country-btn" onclick="filterCountry('sg')" id="btn-sg">
+        <span class="country-flag">🇸🇬</span> 新加坡
+        <span class="country-badge" id="badge-sg">0</span>
+      </button>
+      <button class="country-btn" onclick="filterCountry('id')" id="btn-id">
+        <span class="country-flag">🇮🇩</span> 印尼
+        <span class="country-badge" id="badge-id">0</span>
+      </button>
+      <button class="country-btn" onclick="filterCountry('vn')" id="btn-vn">
+        <span class="country-flag">🇻🇳</span> 越南
+        <span class="country-badge" id="badge-vn">0</span>
+      </button>
+    </div>
+
+    <div class="tier-divider"></div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-title">信息类型</div>
+      <button class="tag-filter active" onclick="filterTag('all')" id="tag-all">
+        <span class="tag-dot" style="background:var(--text3)"></span><span class="tag-filter-text"> 全部类型</span>
+      </button>
+      <button class="tag-filter" onclick="filterTag('model')" id="tag-model">
+        <span class="tag-dot" style="background:var(--tag-model)"></span><span class="tag-filter-text"> 模型/产品发布</span>
+      </button>
+      <button class="tag-filter" onclick="filterTag('policy')" id="tag-policy">
+        <span class="tag-dot" style="background:var(--tag-policy)"></span><span class="tag-filter-text"> 政策法规</span>
+      </button>
+      <button class="tag-filter" onclick="filterTag('funding')" id="tag-funding">
+        <span class="tag-dot" style="background:var(--tag-funding)"></span><span class="tag-filter-text"> 融资并购</span>
+      </button>
+      <button class="tag-filter" onclick="filterTag('research')" id="tag-research">
+        <span class="tag-dot" style="background:var(--tag-research)"></span><span class="tag-filter-text"> 学术研究</span>
+      </button>
+      <button class="tag-filter" onclick="filterTag('app')" id="tag-app">
+        <span class="tag-dot" style="background:var(--tag-app)"></span><span class="tag-filter-text"> 热门应用落地</span>
+      </button>
+    </div>
+
+    <div class="tier-divider"></div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-title">时间范围</div>
+      <div class="time-btns">
+        <button class="time-btn" onclick="filterTime(6)" id="time-6">6H</button>
+        <button class="time-btn active" onclick="filterTime(24)" id="time-24">24H</button>
+        <button class="time-btn" onclick="filterTime(72)" id="time-72">3D</button>
+        <button class="time-btn" onclick="filterTime(168)" id="time-168">7D</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- CONTENT -->
+  <main class="content" style="padding-bottom: 48px;">
+
+    <!-- STATS -->
+    <div class="stats-bar">
+      <div class="stat-card">
+        <div class="stat-label">今日动态</div>
+        <div class="stat-value" id="stat-total">--</div>
+        <div class="stat-sub">条新闻</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">已覆盖国家</div>
+        <div class="stat-value" id="stat-countries">8</div>
+        <div class="stat-sub">个市场</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">AI 摘要</div>
+        <div class="stat-value" id="stat-summarized">--</div>
+        <div class="stat-sub">条已处理</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">数据源</div>
+        <div class="stat-value">20+</div>
+        <div class="stat-sub">RSS / 新闻源</div>
+      </div>
+    </div>
+
+    <!-- NO KEY BANNER -->
+    <div class="no-key-banner" id="noKeyBanner" style="display:none">
+      <span class="icon">⚠</span>
+      <span>未设置 API Key，当前仅显示原始标题，无 AI 摘要。<a onclick="openSettings()">点击设置</a></span>
+    </div>
+
+    <!-- FEED SECTION -->
+    <div class="section-header">
+      <div class="section-title">实时动态</div>
+      <button class="btn-refresh" id="refreshBtn" onclick="loadFeeds()">⟳ 刷新</button>
+    </div>
+
+    <div class="news-feed" id="newsFeed">
+      <div class="loading-state">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">FETCHING FEEDS...</div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- STATUS BAR -->
+<div class="status-bar">
+  <div class="status-item">
+    <div class="status-dot" id="statusDot"></div>
+    <span id="statusText">INITIALIZING</span>
+  </div>
+  <div class="status-item">RSS FEEDS · 20+ SOURCES</div>
+  <div class="status-item" id="statusCount"></div>
+</div>
+
+<script>
+// ── CONFIG ──────────────────────────────────────────────────────
+const COUNTRIES = {
+  us: { name: '美国', flag: '🇺🇸' },
+  cn: { name: '中国', flag: '🇨🇳' },
+  gb: { name: '英国', flag: '🇬🇧' },
+  eu: { name: '欧盟', flag: '🇩🇪' },
+  in: { name: '印度', flag: '🇮🇳' },
+  sg: { name: '新加坡', flag: '🇸🇬' },
+  id: { name: '印尼', flag: '🇮🇩' },
+  vn: { name: '越南', flag: '🇻🇳' },
+};
+
+// ── RSS SOURCE POOLS ──────────────────────────────────────────
+// 国内直连源（rss2json可解析）
+const RSS_CN = [
+  { country: 'cn', name: '量子位', url: 'https://qbitai.com/feed' },
+  { country: 'cn', name: '新智元', url: 'https://www.aiyjs.com/feed' },
+  { country: 'cn', name: '36氪·科技', url: 'https://36kr.com/feed' },
+  { country: 'cn', name: '少数派', url: 'https://sspai.com/feed' },
+  { country: 'cn', name: 'InfoQ中文', url: 'https://www.infoq.cn/feed' },
+];
+
+// 境外源（需本地服务器或代理）
+const RSS_GLOBAL = [
+  { country: 'us', name: 'TechCrunch AI', url: 'https://techcrunch.com/category/artificial-intelligence/feed/' },
+  { country: 'us', name: 'MIT Tech Review', url: 'https://www.technologyreview.com/feed/' },
+  { country: 'us', name: 'VentureBeat AI', url: 'https://venturebeat.com/category/ai/feed/' },
+  { country: 'us', name: 'The Verge AI', url: 'https://www.theverge.com/ai-artificial-intelligence/rss/index.xml' },
+  { country: 'us', name: 'Wired AI', url: 'https://www.wired.com/feed/tag/ai/latest/rss' },
+  { country: 'us', name: 'arXiv CS.AI', url: 'https://rss.arxiv.org/rss/cs.AI' },
+  { country: 'us', name: 'Google AI Blog', url: 'https://blog.research.google/atom.xml' },
+  { country: 'gb', name: 'DeepMind Blog', url: 'https://deepmind.google/blog/rss.xml' },
+  { country: 'gb', name: 'BBC Tech', url: 'https://feeds.bbci.co.uk/news/technology/rss.xml' },
+  { country: 'eu', name: 'EU Digital Strategy', url: 'https://digital-strategy.ec.europa.eu/en/rss.xml' },
+  { country: 'in', name: 'Analytics India', url: 'https://analyticsindiamag.com/feed/' },
+  { country: 'in', name: 'Inc42 Tech', url: 'https://inc42.com/feed/' },
+  { country: 'sg', name: 'Tech in Asia', url: 'https://www.techinasia.com/feed' },
+  { country: 'sg', name: 'e27', url: 'https://e27.co/feed/' },
+];
+
+// 运行时数据源（由用户选择决定）
+let RSS_SOURCES = [];
+
+// 关键词分类规则
+const TAG_RULES = {
+  model: ['model', 'gpt', 'llm', 'claude', 'gemini', 'release', 'launch', 'announce', 'benchmark', '模型', '发布', '大模型', '开源'],
+  policy: ['regulation', 'policy', 'law', 'ban', 'act', 'compliance', 'govern', 'rule', 'legal', '政策', '法规', '监管', '合规', '禁止'],
+  funding: ['fund', 'invest', 'raise', 'million', 'billion', 'acqui', 'merger', 'valuation', 'IPO', '融资', '投资', '收购', '并购', '估值'],
+  research: ['paper', 'research', 'study', 'arxiv', 'survey', 'experiment', 'novel', 'approach', 'algorithm', '研究', '论文', '实验'],
+  app: ['app', 'product', 'tool', 'platform', 'service', 'deploy', 'user', 'adoption', 'enterprise', 'startup', '应用', '落地', '产品', '工具'],
+};
+
+const TAG_LABELS = {
+  model: '模型发布', policy: '政策法规',
+  funding: '融资并购', research: '学术研究', app: '热门应用'
+};
+
+const TAG_STYLES = {
+  model: 'tag-model-style', policy: 'tag-policy-style',
+  funding: 'tag-funding-style', research: 'tag-research-style', app: 'tag-app-style'
+};
+
+// ── STATE ──────────────────────────────────────────────────────
+let allItems = [];
+let filteredItems = [];
+let activeCountry = 'all';
+let activeTag = 'all';
+let activeTimeHours = 24;
+let summarizedCount = 0;
+
+// ── PROVIDER CONFIG ──────────────────────────────────────────
+const PROVIDERS = {
+  aihubmix: {
+    endpoint: 'https://aihubmix.com/v1/chat/completions',
+    defaultModel: 'claude-3-5-haiku-20241022',
+    hint: '前往 <a href="https://aihubmix.com" target="_blank">aihubmix.com</a> 获取 Key，支持国内直连。'
+  },
+  openrouter: {
+    endpoint: 'https://openrouter.ai/api/v1/chat/completions',
+    defaultModel: 'deepseek/deepseek-chat',
+    hint: '前往 <a href="https://openrouter.ai" target="_blank">openrouter.ai</a> 获取 Key，含免费模型额度。'
+  },
+  deepseek: {
+    endpoint: 'https://api.deepseek.com/v1/chat/completions',
+    defaultModel: 'deepseek-chat',
+    hint: '前往 <a href="https://platform.deepseek.com" target="_blank">platform.deepseek.com</a> 获取 Key，价格极低，国内直连。'
+  },
+  openai: {
+    endpoint: 'https://api.openai.com/v1/chat/completions',
+    defaultModel: 'gpt-4o-mini',
+    hint: '前往 <a href="https://platform.openai.com" target="_blank">platform.openai.com</a> 获取 Key，国内需要代理。'
+  },
+  custom: {
+    endpoint: '',
+    defaultModel: '',
+    hint: '填入任何兼容 OpenAI Chat Completions 格式的 API 地址。'
+  }
+};
+
+// ── SETTINGS ──────────────────────────────────────────────────
+function getApiKey()    { return localStorage.getItem('ai_radar_apikey') || ''; }
+function getProvider()  { return localStorage.getItem('ai_radar_provider') || 'aihubmix'; }
+function getModel()     { return localStorage.getItem('ai_radar_model') || PROVIDERS[getProvider()].defaultModel; }
+function getEndpoint()  {
+  const p = getProvider();
+  if (p === 'custom') return localStorage.getItem('ai_radar_endpoint') || '';
+  return PROVIDERS[p].endpoint;
+}
+
+function selectProvider(p) {
+  document.querySelectorAll('.provider-card').forEach(el => el.classList.remove('active'));
+  document.getElementById('prov-' + p).classList.add('active');
+  document.getElementById('modelInput').value = PROVIDERS[p].defaultModel;
+  document.getElementById('providerHint').innerHTML = PROVIDERS[p].hint;
+  document.getElementById('customEndpointRow').style.display = p === 'custom' ? 'block' : 'none';
+}
+
+function openSettings() {
+  const p = getProvider();
+  selectProvider(p);
+  document.getElementById('apiKeyInput').value = getApiKey();
+  document.getElementById('modelInput').value = getModel();
+  document.getElementById('endpointInput').value = localStorage.getItem('ai_radar_endpoint') || '';
+  document.getElementById('settingsModal').classList.add('active');
+}
+function closeSettings() { document.getElementById('settingsModal').classList.remove('active'); }
+function saveSettings() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  const model = document.getElementById('modelInput').value.trim();
+  const endpoint = document.getElementById('endpointInput').value.trim();
+  const activeCard = document.querySelector('.provider-card.active');
+  const provider = activeCard?.id?.replace('prov-', '') || 'aihubmix';
+
+  if (key) localStorage.setItem('ai_radar_apikey', key);
+  else localStorage.removeItem('ai_radar_apikey');
+  localStorage.setItem('ai_radar_provider', provider);
+  if (model) localStorage.setItem('ai_radar_model', model);
+  if (endpoint) localStorage.setItem('ai_radar_endpoint', endpoint);
+
+  closeSettings();
+  updateKeyBanner();
+}
+document.getElementById('settingsModal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeSettings();
+});
+
+function updateKeyBanner() {
+  document.getElementById('noKeyBanner').style.display = getApiKey() ? 'none' : 'flex';
+}
+
+// ── CLASSIFY ──────────────────────────────────────────────────
+function classifyItem(title, desc) {
+  const text = (title + ' ' + (desc || '')).toLowerCase();
+  for (const [tag, keywords] of Object.entries(TAG_RULES)) {
+    if (keywords.some(k => text.includes(k))) return tag;
+  }
+  return 'app';
+}
+
+function timeAgo(date) {
+  const diff = (Date.now() - date.getTime()) / 1000;
+  if (diff < 60) return '刚刚';
+  if (diff < 3600) return `${Math.floor(diff/60)}分钟前`;
+  if (diff < 86400) return `${Math.floor(diff/3600)}小时前`;
+  return `${Math.floor(diff/86400)}天前`;
+}
+
+// ── RSS FETCH ──────────────────────────────────────────────────
+// 多代理策略：依次尝试，任一成功即返回
+const PROXIES = [
+  url => `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`,
+  url => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+  url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+];
+
+async function fetchRSS(source) {
+  for (let i = 0; i < PROXIES.length; i++) {
+    try {
+      const proxyUrl = PROXIES[i](source.url);
+      const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(9000) });
+      if (!res.ok) continue;
+      const data = await res.json();
+
+      // rss2json 格式
+      if (data.status === 'ok' && data.items) {
+        return data.items.slice(0, 8).map(item => {
+          const date = item.pubDate ? new Date(item.pubDate) : new Date();
+          const desc = (item.description || item.content || '').replace(/<[^>]*>/g, '').substring(0, 200);
+          return {
+            id: (item.link || '') + date.getTime(),
+            title: item.title?.trim() || '',
+            link: item.link || '#',
+            desc,
+            date,
+            country: source.country,
+            source: source.name,
+            tag: classifyItem(item.title, desc),
+            summary: null,
+            summaryLoading: false,
+          };
+        }).filter(i => i.title);
+      }
+
+      // allorigins / corsproxy 格式（返回原始XML）
+      const rawXml = data.contents || (typeof data === 'string' ? data : null);
+      if (rawXml) {
+        const parser = new DOMParser();
+        const xml = parser.parseFromString(rawXml, 'text/xml');
+        const items = [...xml.querySelectorAll('item, entry')];
+        return items.slice(0, 8).map(item => {
+          const title = item.querySelector('title')?.textContent?.trim() || '';
+          const link = item.querySelector('link')?.textContent?.trim()
+            || item.querySelector('link')?.getAttribute('href') || '#';
+          const desc = (item.querySelector('description, summary, content')?.textContent || '')
+            .replace(/<[^>]*>/g, '').substring(0, 200);
+          const pubDate = item.querySelector('pubDate, published, updated')?.textContent;
+          const date = pubDate ? new Date(pubDate) : new Date();
+          return {
+            id: link + date.getTime(),
+            title, link, desc, date,
+            country: source.country,
+            source: source.name,
+            tag: classifyItem(title, desc),
+            summary: null, summaryLoading: false,
+          };
+        }).filter(i => i.title);
+      }
+    } catch { /* try next proxy */ }
+  }
+  return [];
+}
+
+// ── AI SUMMARY ──────────────────────────────────────────────────
+async function summarizeItem(item) {
+  const apiKey = getApiKey();
+  if (!apiKey || item.summary || item.summaryLoading) return;
+  item.summaryLoading = true;
+
+  try {
+    const res = await fetch(getEndpoint(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: getModel(),
+        max_tokens: 120,
+        messages: [{
+          role: 'user',
+          content: t('summaryPrompt', item.title, item.desc)
+        }]
+      })
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      item.summary = data.choices?.[0]?.message?.content?.trim() || null;
+      item.summaryLoading = false;
+      summarizedCount++;
+      document.getElementById('stat-summarized').textContent = summarizedCount;
+      renderFeed();
+    } else {
+      item.summaryLoading = false;
+    }
+  } catch {
+    item.summaryLoading = false;
+  }
+}
+
+// ── LOAD ──────────────────────────────────────────────────────
+async function loadFeeds() {
+  const btn = document.getElementById('refreshBtn');
+  btn.disabled = true;
+  btn.textContent = t('btnRefreshing');
+  setStatus('loading');
+
+  document.getElementById('newsFeed').innerHTML = `
+    <div class="loading-state">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">${t('fetchingText', RSS_SOURCES.length)}</div>
+    </div>`;
+
+  const results = await Promise.allSettled(RSS_SOURCES.map(fetchRSS));
+  allItems = results
+    .flatMap(r => r.status === 'fulfilled' ? r.value : [])
+    .sort((a, b) => b.date - a.date);
+
+  // Deduplicate by title similarity
+  const seen = new Set();
+  allItems = allItems.filter(item => {
+    const key = item.title.substring(0, 40).toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key); return true;
+  });
+
+  updateBadges();
+  applyFilters();
+  setStatus('online', t('statusOnline', allItems.length));
+  document.getElementById('stat-total').textContent = allItems.length;
+  document.getElementById('lastUpdateTime').textContent = `LAST UPDATE: ${new Date().toLocaleTimeString(getLang() === 'zh' ? 'zh-CN' : 'en-US')}`;
+
+  btn.disabled = false;
+  btn.textContent = t('btnRefresh');
+
+  // Auto-summarize top items if key exists
+  if (getApiKey()) {
+    filteredItems.slice(0, 8).forEach(item => summarizeItem(item));
+  }
+}
+
+// ── FILTER ──────────────────────────────────────────────────────
+function filterCountry(c) {
+  activeCountry = c;
+  document.querySelectorAll('.country-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('btn-' + c)?.classList.add('active');
+  applyFilters();
+}
+
+function filterTag(t) {
+  activeTag = t;
+  document.querySelectorAll('.tag-filter').forEach(b => b.classList.remove('active'));
+  document.getElementById('tag-' + t)?.classList.add('active');
+  applyFilters();
+}
+
+function filterTime(h) {
+  activeTimeHours = h;
+  document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('time-' + h)?.classList.add('active');
+  applyFilters();
+}
+
+function applyFilters() {
+  const cutoff = new Date(Date.now() - activeTimeHours * 3600 * 1000);
+  filteredItems = allItems.filter(item => {
+    if (activeCountry !== 'all' && item.country !== activeCountry) return false;
+    if (activeTag !== 'all' && item.tag !== activeTag) return false;
+    if (item.date < cutoff) return false;
+    return true;
+  });
+  renderFeed();
+  document.getElementById('statusCount').textContent = t('statusCount', filteredItems.length, allItems.length);
+}
+
+function updateBadges() {
+  const counts = {};
+  allItems.forEach(i => { counts[i.country] = (counts[i.country] || 0) + 1; });
+  let total = 0;
+  Object.entries(counts).forEach(([c, n]) => {
+    const el = document.getElementById('badge-' + c);
+    if (el) el.textContent = n;
+    total += n;
+  });
+  document.getElementById('badge-all').textContent = total;
+}
+
+// ── RENDER ──────────────────────────────────────────────────────
+function renderFeed() {
+  const feed = document.getElementById('newsFeed');
+  const lang = getLang();
+  const tagLabels = TAG_LABELS_I18N[lang];
+  const countryNames = COUNTRY_NAMES_I18N[lang];
+
+  if (!filteredItems.length) {
+    feed.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📡</div>
+        <p>${t('emptyMsg')}<br>
+        <a onclick="filterCountry('all'); filterTag('all')">${t('emptyClear')}</a> · 
+        <a onclick="loadFeeds()">${t('emptyReload')}</a></p>
+      </div>`;
+    return;
+  }
+
+  feed.innerHTML = filteredItems.map((item, i) => {
+    const flag = COUNTRIES[item.country]?.flag || '🌐';
+    const cname = countryNames[item.country] || item.country.toUpperCase();
+    const tagStyle = TAG_STYLES[item.tag] || 'tag-app-style';
+    const tagLabel = tagLabels[item.tag] || tagLabels.app;
+    const hasSummary = item.summary;
+    const isLoading = item.summaryLoading;
+
+    return `
+    <div class="news-card" onclick="window.open('${item.link}', '_blank')"
+         style="animation-delay: ${Math.min(i * 30, 300)}ms">
+      <div class="news-meta">
+        <span class="news-country">${flag} ${cname}</span>
+        <span class="news-tag ${tagStyle}">${tagLabel}</span>
+        ${hasSummary ? `<span class="ai-badge">${t('aiTag')}</span>` : ''}
+        ${isLoading ? `<span class="ai-badge" style="opacity:0.5">${t('aiLoading')}</span>` : ''}
+        <span class="news-time">${timeAgo(item.date)}</span>
+      </div>
+      <div class="news-title">${item.title}</div>
+      ${hasSummary
+        ? `<div class="news-summary" style="color:var(--text)">${item.summary}</div>`
+        : item.desc ? `<div class="news-summary">${item.desc}</div>` : ''
+      }
+      <div class="news-source">${item.source}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── I18N ──────────────────────────────────────────────────────
+const STRINGS = {
+  zh: {
+    logoSub: '全球AI动态',
+    btnRegion: '🌏 切换模式',
+    btnApiKey: '⚙ API KEY',
+    btnLang: 'EN',
+    tier1: '第一梯队',
+    tier2: '新兴市场',
+    all: '全部',
+    us: '美国', cn: '中国', gb: '英国', eu: '欧盟',
+    in: '印度', sg: '新加坡', id: '印尼', vn: '越南',
+    infoType: '信息类型',
+    tagAll: '全部类型',
+    tagModel: '模型/产品发布',
+    tagPolicy: '政策法规',
+    tagFunding: '融资并购',
+    tagResearch: '学术研究',
+    tagApp: '热门应用落地',
+    timeRange: '时间范围',
+    statToday: '今日动态', statTodaySub: '条新闻',
+    statCountries: '已覆盖国家', statCountriesSub: '个市场',
+    statSummary: 'AI 摘要', statSummarySub: '条已处理',
+    statSources: '数据源', statSourcesSub: 'RSS / 新闻源',
+    noKeyMsg: '未设置 API Key，当前仅显示原始标题，无 AI 摘要。',
+    noKeyLink: '点击设置',
+    sectionTitle: '实时动态',
+    btnRefresh: '⟳ 刷新',
+    btnRefreshing: '⟳ 加载中...',
+    emptyMsg: '当前筛选条件下没有数据',
+    emptyClear: '清除筛选',
+    emptyReload: '重新加载',
+    aiTag: 'AI摘要',
+    aiLoading: '处理中...',
+    statusInit: 'INITIALIZING',
+    statusFetching: 'FETCHING DATA...',
+    statusOnline: (n) => `${n} 条动态`,
+    statusCount: (f, t) => `显示 ${f} / ${t}`,
+    fetchingText: (n) => `FETCHING ${n} SOURCES...`,
+    summaryPrompt: (title, desc) =>
+      `用一句话（50字以内）总结以下AI新闻要点，输出纯中文，不加任何前缀：\n\n标题：${title}\n摘要：${desc}`,
+    // region modal
+    regionTitle: '🌏 选择数据源模式',
+    regionDesc: '根据你的网络环境选择合适的数据源，也可以随时在设置中切换。',
+    cnModeTitle: '国内模式', cnModeSub: '直连 · 无需代理', cnModeNote: '✓ 推荐 · 打开即用',
+    globalModeTitle: '全球模式', globalModeSub: '国内 + 境外全部源', globalModeNote: '需要本地服务器或代理',
+    globalGuideTitle: '▶ 使用全球模式需先启动本地服务器',
+    globalGuideDesc: '在终端中执行以下任一命令：',
+    globalGuideWay1: '方式一：Python（推荐）', globalGuideWay2: '方式二：Node.js',
+    globalGuideThen: '然后浏览器访问',
+    btnBack: '← 返回', btnEnterGlobal: '已启动，进入全球模式 →',
+    regionHint: '可随时通过顶部菜单切换模式',
+    // settings modal
+    settingsTitle: '⚙ AI 摘要设置',
+    settingsDesc: '选择你的 API 服务商并填入 Key，即可启用智能中文摘要。Key 仅存储在浏览器本地，不经过任何服务器。',
+    labelProvider: '选择服务商',
+    labelApiKey: 'API KEY',
+    labelModel: '模型名称',
+    labelEndpoint: '自定义 API 地址',
+    settingsHint: (html) => html,
+    btnCancel: '取消', btnSave: '保存',
+    provAihubDesc: '国内直连 · 支持Claude/GPT/Gemini',
+    provOpenrouterDesc: '200+ 模型 · 含免费额度',
+    provDeepseekDesc: '国内直连 · 极低价格',
+    provOpenaiDesc: 'GPT-4o · 需要代理',
+    provCustomTitle: '自定义端点', provCustomDesc: '任何兼容 OpenAI 格式的服务',
+  },
+  en: {
+    logoSub: 'Global AI Monitor',
+    btnRegion: '🌏 Switch Mode',
+    btnApiKey: '⚙ API KEY',
+    btnLang: '中文',
+    tier1: 'Tier 1',
+    tier2: 'Emerging',
+    all: 'All',
+    us: 'USA', cn: 'China', gb: 'UK', eu: 'EU',
+    in: 'India', sg: 'Singapore', id: 'Indonesia', vn: 'Vietnam',
+    infoType: 'Category',
+    tagAll: 'All Types',
+    tagModel: 'Model / Product',
+    tagPolicy: 'Policy / Regulation',
+    tagFunding: 'Funding / M&A',
+    tagResearch: 'Research',
+    tagApp: 'Hot Applications',
+    timeRange: 'Time Range',
+    statToday: "Today's Updates", statTodaySub: 'articles',
+    statCountries: 'Coverage', statCountriesSub: 'markets',
+    statSummary: 'AI Summaries', statSummarySub: 'processed',
+    statSources: 'Sources', statSourcesSub: 'RSS feeds',
+    noKeyMsg: 'No API Key set. Showing raw titles only — no AI summaries.',
+    noKeyLink: 'Set Key',
+    sectionTitle: 'Live Feed',
+    btnRefresh: '⟳ Refresh',
+    btnRefreshing: '⟳ Loading...',
+    emptyMsg: 'No results for current filters.',
+    emptyClear: 'Clear filters',
+    emptyReload: 'Reload',
+    aiTag: 'AI Summary',
+    aiLoading: 'Processing...',
+    statusInit: 'INITIALIZING',
+    statusFetching: 'FETCHING DATA...',
+    statusOnline: (n) => `${n} ITEMS LOADED`,
+    statusCount: (f, t) => `Showing ${f} / ${t}`,
+    fetchingText: (n) => `FETCHING ${n} SOURCES...`,
+    summaryPrompt: (title, desc) =>
+      `Summarize the following AI news in ONE sentence (max 30 words). Output plain English only, no prefix:\n\nTitle: ${title}\nDescription: ${desc}`,
+    regionTitle: '🌏 Select Data Source Mode',
+    regionDesc: 'Choose based on your network. You can switch anytime from the top menu.',
+    cnModeTitle: 'China Mode', cnModeSub: 'Direct · No proxy needed', cnModeNote: '✓ Recommended · Ready to use',
+    globalModeTitle: 'Global Mode', globalModeSub: 'China + International sources', globalModeNote: 'Requires local server or proxy',
+    globalGuideTitle: '▶ Start a local server before using Global Mode',
+    globalGuideDesc: 'Run one of the following commands in your terminal:',
+    globalGuideWay1: 'Option 1: Python (recommended)', globalGuideWay2: 'Option 2: Node.js',
+    globalGuideThen: 'Then open in browser:',
+    btnBack: '← Back', btnEnterGlobal: 'Server running, enter Global Mode →',
+    regionHint: 'You can switch modes anytime from the top menu.',
+    settingsTitle: '⚙ AI Summary Settings',
+    settingsDesc: 'Choose your API provider and enter your Key to enable AI summaries. Key is stored locally in your browser only.',
+    labelProvider: 'Provider',
+    labelApiKey: 'API KEY',
+    labelModel: 'Model Name',
+    labelEndpoint: 'Custom API Endpoint',
+    settingsHint: (html) => html,
+    btnCancel: 'Cancel', btnSave: 'Save',
+    provAihubDesc: 'China direct · Claude/GPT/Gemini',
+    provOpenrouterDesc: '200+ models · Free tier available',
+    provDeepseekDesc: 'China direct · Very low cost',
+    provOpenaiDesc: 'GPT-4o · Proxy required in China',
+    provCustomTitle: 'Custom Endpoint', provCustomDesc: 'Any OpenAI-compatible API',
+  }
+};
+
+const TAG_LABELS_I18N = {
+  zh: { model: '模型发布', policy: '政策法规', funding: '融资并购', research: '学术研究', app: '热门应用' },
+  en: { model: 'Model Release', policy: 'Policy', funding: 'Funding', research: 'Research', app: 'App' },
+};
+
+const COUNTRY_NAMES_I18N = {
+  zh: { us:'美国', cn:'中国', gb:'英国', eu:'欧盟', in:'印度', sg:'新加坡', id:'印尼', vn:'越南' },
+  en: { us:'USA', cn:'China', gb:'UK', eu:'EU', in:'India', sg:'Singapore', id:'Indonesia', vn:'Vietnam' },
+};
+
+function getLang() { return localStorage.getItem('ai_radar_lang') || 'zh'; }
+function t(key, ...args) {
+  const s = STRINGS[getLang()];
+  const v = s[key];
+  return typeof v === 'function' ? v(...args) : (v ?? key);
+}
+
+function applyLanguage() {
+  const lang = getLang();
+  const s = STRINGS[lang];
+
+  // header
+  document.querySelector('.logo span').textContent = s.logoSub;
+  document.getElementById('regionBtn').textContent = s.btnRegion;
+  document.getElementById('apiKeyBtn').textContent = s.btnApiKey;
+  document.getElementById('langBtn').textContent = s.btnLang;
+
+  // sidebar titles
+  const sideTitles = document.querySelectorAll('.sidebar-title');
+  sideTitles[0].textContent = s.tier1;
+  sideTitles[1].textContent = s.tier2;
+  sideTitles[2].textContent = s.infoType;
+  sideTitles[3].textContent = s.timeRange;
+
+  // country buttons (text node only, keep flag + badge)
+  const countryMap = COUNTRY_NAMES_I18N[lang];
+  document.querySelectorAll('.country-btn').forEach(btn => {
+    const id = btn.id.replace('btn-', '');
+    const label = id === 'all' ? s.all : (countryMap[id] || id.toUpperCase());
+    // Update text node (3rd child: flag, text, badge)
+    const textNode = [...btn.childNodes].find(n => n.nodeType === 3);
+    if (textNode) textNode.textContent = ' ' + label + ' ';
+  });
+
+  // tag filters
+  document.querySelector('#tag-all .tag-filter-text').textContent = s.tagAll;
+  document.querySelector('#tag-model .tag-filter-text').textContent = s.tagModel;
+  document.querySelector('#tag-policy .tag-filter-text').textContent = s.tagPolicy;
+  document.querySelector('#tag-funding .tag-filter-text').textContent = s.tagFunding;
+  document.querySelector('#tag-research .tag-filter-text').textContent = s.tagResearch;
+  document.querySelector('#tag-app .tag-filter-text').textContent = s.tagApp;
+
+  // stats
+  document.querySelector('#stat-total').closest('.stat-card').querySelector('.stat-label').textContent = s.statToday;
+  document.querySelector('#stat-total').closest('.stat-card').querySelector('.stat-sub').textContent = s.statTodaySub;
+  document.querySelector('#stat-countries').closest('.stat-card').querySelector('.stat-label').textContent = s.statCountries;
+  document.querySelector('#stat-countries').closest('.stat-card').querySelector('.stat-sub').textContent = s.statCountriesSub;
+  document.querySelector('#stat-summarized').closest('.stat-card').querySelector('.stat-label').textContent = s.statSummary;
+  document.querySelector('#stat-summarized').closest('.stat-card').querySelector('.stat-sub').textContent = s.statSummarySub;
+  document.querySelectorAll('.stat-card')[3].querySelector('.stat-label').textContent = s.statSources;
+  document.querySelectorAll('.stat-card')[3].querySelector('.stat-sub').textContent = s.statSourcesSub;
+
+  // no-key banner
+  document.querySelector('#noKeyBanner span:last-child').innerHTML =
+    `${s.noKeyMsg} <a onclick="openSettings()">${s.noKeyLink}</a>`;
+
+  // section title & refresh btn
+  document.querySelector('.section-title').innerHTML =
+    `<span style="content:'';width:3px;height:14px;background:var(--accent);border-radius:2px;display:inline-block;margin-right:8px"></span>${s.sectionTitle}`;
+  const rBtn = document.getElementById('refreshBtn');
+  if (!rBtn.disabled) rBtn.textContent = s.btnRefresh;
+
+  // settings modal
+  document.querySelector('#settingsModal h2').textContent = s.settingsTitle;
+  document.querySelector('#settingsModal > .modal > p').textContent = s.settingsDesc;
+  document.querySelector('#settingsModal label[for-section="provider"]').textContent = s.labelProvider;
+  document.querySelector('#settingsModal label[for-section="apikey"]').textContent = s.labelApiKey;
+  document.querySelector('#settingsModal label[for-section="model"]').textContent = s.labelModel;
+  document.querySelector('#settingsModal label[for-section="endpoint"]').textContent = s.labelEndpoint;
+  document.querySelector('#settingsModal .btn-cancel').textContent = s.btnCancel;
+  document.querySelector('#settingsModal .btn-save').textContent = s.btnSave;
+  document.querySelector('#prov-aihubmix .prov-desc').textContent = s.provAihubDesc;
+  document.querySelector('#prov-openrouter .prov-desc').textContent = s.provOpenrouterDesc;
+  document.querySelector('#prov-deepseek .prov-desc').textContent = s.provDeepseekDesc;
+  document.querySelector('#prov-openai .prov-desc').textContent = s.provOpenaiDesc;
+  document.querySelector('#prov-custom .prov-name').textContent = s.provCustomTitle;
+  document.querySelector('#prov-custom .prov-desc').textContent = s.provCustomDesc;
+
+  // re-render feed to update tag labels and country names
+  renderFeed();
+}
+
+function toggleLanguage() {
+  const next = getLang() === 'zh' ? 'en' : 'zh';
+  localStorage.setItem('ai_radar_lang', next);
+  applyLanguage();
+}
+function setStatus(state, text) {
+  const dot = document.getElementById('statusDot');
+  const txt = document.getElementById('statusText');
+  if (state === 'loading') { dot.className = 'status-dot'; txt.textContent = t('statusFetching'); }
+  else if (state === 'online') { dot.className = 'status-dot'; txt.textContent = text || 'ONLINE'; }
+  else { dot.className = 'status-dot offline'; txt.textContent = 'ERROR'; }
+}
+
+function showGlobalGuide() {
+  document.getElementById('globalGuide').style.display = 'block';
+  document.getElementById('regionDefaultActions').style.display = 'none';
+}
+function hideGlobalGuide() {
+  document.getElementById('globalGuide').style.display = 'none';
+  document.getElementById('regionDefaultActions').style.display = 'block';
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+function init() {
+  applyLanguage();
+  updateKeyBanner();
+  const region = localStorage.getItem('ai_radar_region');
+  if (!region) {
+    showRegionModal();
+  } else {
+    applyRegion(region, false);
+    loadFeeds();
+  }
+  setInterval(loadFeeds, 15 * 60 * 1000);
+}
+
+function applyRegion(region, save = true) {
+  if (save) localStorage.setItem('ai_radar_region', region);
+  if (region === 'cn') {
+    RSS_SOURCES = [...RSS_CN];
+  } else if (region === 'global') {
+    RSS_SOURCES = [...RSS_CN, ...RSS_GLOBAL];
+  }
+  document.querySelector('.status-bar .status-item:nth-child(2)').textContent =
+    `RSS FEEDS · ${RSS_SOURCES.length} SOURCES`;
+}
+
+function showRegionModal() {
+  document.getElementById('regionModal').classList.add('active');
+}
+
+function selectRegion(r) {
+  applyRegion(r);
+  document.getElementById('regionModal').classList.remove('active');
+  loadFeeds();
+}
+
+init();
+</script>
+</body>
+</html>
